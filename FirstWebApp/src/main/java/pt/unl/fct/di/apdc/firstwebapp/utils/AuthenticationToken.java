@@ -1,51 +1,76 @@
 package pt.unl.fct.di.apdc.firstwebapp.utils;
 
-import java.util.UUID;
+//Authentication token used for identity verification
 
 public class AuthenticationToken {
-	
-	
-	private static final long EXPIRATION_TIME = 1000*60*60*2;//2h
-	
 	private String id;
-	private String tokenID;
+	private String userId;
+	private String userRole;
 	private long creationDate;
 	private long expirationDate;
+	private String checksum;
 	
 	public AuthenticationToken() {}
 	
-	public AuthenticationToken(String id) {
+	public AuthenticationToken(String id,String userId,String userRole,long creationDate, long expirationDate, String checksum) {
 		this.id = id;
-		this.tokenID = UUID.randomUUID().toString();
-		this.creationDate = System.currentTimeMillis();
-		this.expirationDate = this.creationDate + EXPIRATION_TIME;
+		this.userId = userId;
+		this.userRole = userRole;
+		this.creationDate = creationDate;
+		this.expirationDate = expirationDate;
+		this.checksum = checksum;
+	}
+	
+	public boolean validate(String checksum,long now) {
+		return !(!this.checksum.equals(checksum) || creationDate > now || expirationDate < now);
 	}
 	
 	public String getId() {
 		return id;
 	}
-	public void setId(String username) {
-		this.id = username;
+	
+	public void setId(String id) {
+		this.id = id;
 	}
-	public String getTokenID() {
-		return tokenID;
+	public String getUserId() {
+		return userId;
 	}
-	public void setTokenID(String tokenID) {
-		this.tokenID = tokenID;
+
+	public void setUserId(String userId) {
+		this.userId = userId;
 	}
+	
+	public String getUserRole() {
+		return userRole;
+	}
+
+	public void setUserRole(String userRole) {
+		this.userRole = userRole;
+	}
+	
 	public long getCreationDate() {
 		return creationDate;
 	}
+
 	public void setCreationDate(long creationDate) {
 		this.creationDate = creationDate;
 	}
+
 	public long getExpirationDate() {
 		return expirationDate;
 	}
+
 	public void setExpirationDate(long expirationDate) {
 		this.expirationDate = expirationDate;
 	}
-	public static long getExpirationTime() {
-		return EXPIRATION_TIME;
+
+	public String getChecksum() {
+		return checksum;
 	}
+
+	public void setChecksum(String checksum) {
+		this.checksum = checksum;
+	}
+	
+	
 }

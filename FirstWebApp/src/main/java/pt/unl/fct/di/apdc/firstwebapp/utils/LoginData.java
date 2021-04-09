@@ -1,23 +1,38 @@
 package pt.unl.fct.di.apdc.firstwebapp.utils;
 
+//Data required for logging in
+
 public class LoginData {
 	
-	private String id;
+	private String userId;
 	private String password;
 	
 	public LoginData() {}
 	
-	public LoginData(String id, String password) {
-		this.id = id;
+	public LoginData(String userId, String password) {
+		this.userId = userId;
 		this.password = password;
 	}
 	
-	public String getId() {
-		return id;
+	public boolean validate() {
+		
+		if(userId == null || userId.equals("")) {
+			return false;
+		}
+		
+		if(password == null || password.equals("")) {
+			return false;
+		}
+		
+		return true;
 	}
 
-	public void setId(String id) {
-		this.id = id;
+	public String getUserId() {
+		return userId;
+	}
+
+	public void setUserId(String userId) {
+		this.userId = userId;
 	}
 
 	public String getPassword() {
@@ -27,5 +42,6 @@ public class LoginData {
 	public void setPassword(String password) {
 		this.password = password;
 	}
+	
 	
 }
