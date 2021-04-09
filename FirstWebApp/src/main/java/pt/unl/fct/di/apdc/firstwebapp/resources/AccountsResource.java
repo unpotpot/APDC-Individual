@@ -353,7 +353,7 @@ public class AccountsResource {
 			Entity storedProfile = txn.get(profileKey);
 			
 			ProfileData profile = new ProfileData(user.getString("visibility"),token.getUserId(),user.getString("email"),storedProfile.getString("landline"),storedProfile.getString("cellphone"),
-					storedProfile.getString("address"),storedProfile.getString("complementary_address"),storedProfile.getString("local"),storedProfile.getString("postal_code"));
+					storedProfile.getString("address"),storedProfile.getString("complementary_address"),storedProfile.getString("local"),storedProfile.getString("zipcode"));
 			
 			txn.commit();
 			log.info(String.format("Got profile of user with ID:[%s]\n", token.getUserId()));
@@ -431,10 +431,10 @@ public class AccountsResource {
 					.set("address",data.getProfile().getAddress())
 					.set("complementary_address", data.getProfile().getComplementary_address())
 					.set("local",data.getProfile().getLocal())
-					.set("postal_code", data.getProfile().getPostal_code())
+					.set("zipcode", data.getProfile().getZipcode())
 					.build();
 			
-			txn.put(updatedUser,updatedProfile);
+			txn.update(updatedUser,updatedProfile);
 			txn.commit();
 			log.info(String.format("Changed profile of user with ID:[%s]\n", data.getToken().getUserId()));
 			return Response.ok().build();
@@ -501,7 +501,7 @@ public class AccountsResource {
 					.build();
 				
 			
-			txn.put(updatedUser);
+			txn.update(updatedUser);
 			txn.commit();
 			log.info(String.format("Changed profile of user with ID:[%s]\n", data.getToken().getUserId()));
 			return Response.ok().build();
@@ -519,7 +519,6 @@ public class AccountsResource {
 			}
 		}
 	}
-	
 	
 	@POST
 	@Path("/listPublicLoggedInUsers")

@@ -12,11 +12,11 @@ public class ProfileData {
 	private String address;
 	private String complementary_address;
 	private String local;
-	private String postal_code;
+	private String zipcode;
 	
 	public ProfileData() {}
 
-	public ProfileData(String visibility, String userId, String email, String landline, String cellphone, String address, String complementary_address, String local, String postal_code) {
+	public ProfileData(String visibility, String userId, String email, String landline, String cellphone, String address, String complementary_address, String local, String zipcode) {
 		this.visibility = visibility;
 		this.userId = userId;
 		this.email = email;
@@ -25,7 +25,7 @@ public class ProfileData {
 		this.address = address;
 		this.complementary_address = complementary_address;
 		this.local = local;
-		this.postal_code = postal_code;
+		this.zipcode = zipcode;
 	}
 	
 	
@@ -48,7 +48,7 @@ public class ProfileData {
 		//no validation for address , complementary_address or local
 		
 		//if postal_code is not empty it must be of length 8 and contain 4 integers followed by a dash and then 3 integers
-		if( !postal_code.isEmpty() && (postal_code.length() != 8) || postal_code.charAt(4) != '-' || !postal_code.split("-")[0].matches("[0-9]+") || !postal_code.split("-")[1].matches("[0-9]+") ){return false;}
+		if( !zipcode.isEmpty() && (zipcode.length() != 8) || zipcode.charAt(4) != '-' || !zipcode.split("-")[0].matches("[0-9]+") || !zipcode.split("-")[1].matches("[0-9]+") ){return false;}
 		
 		return true;
 	}
@@ -117,12 +117,12 @@ public class ProfileData {
 		this.local = local;
 	}
 
-	public String getPostal_code() {
-		return postal_code;
+	public String getZipcode() {
+		return zipcode;
 	}
 
-	public void setPostal_code(String postal_code) {
-		this.postal_code = postal_code;
+	public void setZipcode(String zipcode) {
+		this.zipcode = zipcode;
 	}
 	
 	

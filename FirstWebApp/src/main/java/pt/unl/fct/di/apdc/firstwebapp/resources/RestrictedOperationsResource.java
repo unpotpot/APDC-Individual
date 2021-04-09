@@ -86,8 +86,8 @@ public class RestrictedOperationsResource {
 				return Response.status(Status.FORBIDDEN).build();
 			}
 			
-			//USER cant delete anyone
-			if(token.getUserRole().equals(Roles.USER.toString())) {
+			//Only GA  and SU can delete others accounts
+			if(!token.getUserRole().equals(Roles.GA.toString())  && !token.getUserRole().equals(Roles.SU.toString())) {
 				txn.rollback();
 				log.warning(String.format("User with ID:[%s] cannot delete other USER accounts\n",token.getId()));
 				return Response.status(Status.FORBIDDEN).build();
@@ -104,21 +104,6 @@ public class RestrictedOperationsResource {
 			if(deleteUser.getString("role").equals(Roles.SU.toString()) || deleteUser.getString("role").equals(Roles.GA.toString())) {
 				txn.rollback();
 				log.warning(String.format("User with ID:[%s] cannot be deleted by user with ID[%s]\n",userId,token.getUserId()));
-				return Response.status(Status.FORBIDDEN).build();
-			}
-			
-			//only SU  can delete GBO
-			if(deleteUser.getString("role").equals(Roles.GBO.toString()) && (!token.getUserRole().equals(Roles.SU.toString()))) {
-				txn.rollback();
-				log.warning(String.format("User with ID:[%s] cannot be deleted by user with ID[%s]\n",userId,token.getId()));
-				return Response.status(Status.FORBIDDEN).build();
-			}
-			
-			
-			//only GBO and GA  can delete USER
-			if(deleteUser.getString("role").equals(Roles.USER.toString()) && (!token.getUserRole().equals(Roles.GA.toString())) && (!token.getUserRole().equals(Roles.GBO.toString()))) {
-				txn.rollback();
-				log.warning(String.format("User with ID:[%s] cannot be deleted by user with ID[%s]\n",userId,token.getId()));
 				return Response.status(Status.FORBIDDEN).build();
 			}
 			
@@ -181,8 +166,8 @@ public class RestrictedOperationsResource {
 				return Response.status(Status.FORBIDDEN).build();
 			}
 			
-			//USER cant change roles
-			if(token.getUserRole().equals(Roles.USER.toString())) {
+			//USER and GBO cant change roles
+			if(token.getUserRole().equals(Roles.USER.toString()) || token.getUserRole().equals(Roles.GBO.toString())) {
 				txn.rollback();
 				log.warning(String.format("Token with ID:[%s] does not have permission to change roles\n",token.getId()));
 				return Response.status(Status.FORBIDDEN).build();
@@ -192,12 +177,6 @@ public class RestrictedOperationsResource {
 			if(role.equals(Roles.GA.toString()) && !token.getUserRole().equals(Roles.SU.toString())) {
 				txn.rollback();
 				log.warning(String.format("Token with ID:[%s] does not have permission to change role to GA\n",token.getId()));
-				return Response.status(Status.FORBIDDEN).build();
-			}
-			//only GA and SU can change to GBO
-			if(role.equals(Roles.GBO.toString()) && !token.getUserRole().equals(Roles.SU.toString()) && !token.getUserRole().equals(Roles.GA.toString())) {
-				txn.rollback();
-				log.warning(String.format("Token with ID:[%s] does not have permission to change role to GBO\n",token.getId()));
 				return Response.status(Status.FORBIDDEN).build();
 			}
 			
@@ -220,15 +199,10 @@ public class RestrictedOperationsResource {
 				return Response.status(Status.FORBIDDEN).build();
 			}
 			
-			if(user.getString("role").equals(Roles.GBO.toString()) && !token.getUserRole().equals(Roles.SU.toString()) && !token.getUserRole().equals(Roles.GA.toString())) {
-				txn.rollback();
-				log.warning(String.format("Token with ID:[%s] does not have permission to change role to USER\n",token.getId()));
-				return Response.status(Status.FORBIDDEN).build();
-			}
 			
 			Entity changedUser =  Entity.newBuilder(user).set("role",role).build();
 			
-			txn.put(changedUser);
+			txn.update(changedUser);
 			txn.commit();
 			log.info(String.format("Changed role of user with ID:[%s] \n", userId));
 			return Response.ok().build();
@@ -306,7 +280,7 @@ public class RestrictedOperationsResource {
 			
 			Entity changedUser =  Entity.newBuilder(user).set("status",status).build();
 			
-			txn.put(changedUser);
+			txn.update(changedUser);
 			txn.commit();
 			log.info(String.format("Changed role of user with ID:[%s] \n", userId));
 			return Response.ok().build();
@@ -354,8 +328,8 @@ public class RestrictedOperationsResource {
 				return Response.status(Status.FORBIDDEN).build();//Token not valid(wrong checksum)
 			}
 			
-			//only GBA and GA can do this
-			if(!token.getUserRole().equals(Roles.GBO.toString()) && !token.getUserRole().equals(Roles.GA.toString())) {
+			//USER cannot do this
+			if(token.getUserRole().equals(Roles.USER.toString())) {
 				txn.rollback();
 				log.warning(String.format("Token with ID:[%s] does not have permission to get arbitrary profiles\n",token.getId()));
 				return Response.status(Status.FORBIDDEN).build();
@@ -372,7 +346,7 @@ public class RestrictedOperationsResource {
 			Entity storedProfile = txn.get(profileKey);
 			
 			ProfileData profile = new ProfileData(user.getString("visibility"),token.getUserId(),user.getString("email"),storedProfile.getString("landline"),storedProfile.getString("cellphone"),
-					storedProfile.getString("address"),storedProfile.getString("complementary_address"),storedProfile.getString("local"),storedProfile.getString("postal_code"));
+					storedProfile.getString("address"),storedProfile.getString("complementary_address"),storedProfile.getString("local"),storedProfile.getString("zipcode"));
 			
 			txn.commit();
 			log.info(String.format("Got profile of user with ID:[%s]\n", token.getUserId()));
@@ -604,9 +578,6 @@ public class RestrictedOperationsResource {
 		}
 	}
 
-	
-	
-	
 	private boolean validateToken(AuthenticationToken token, long now) {
 		String checksum = DigestUtils.sha512Hex(token.getId()+token.getUserId()+token.getUserRole()+token.getCreationDate()+token.getExpirationDate()+SALT);
 		return token.validate(checksum,now);
