@@ -8,6 +8,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -92,7 +93,7 @@ public class AccountsResource {
 				.set("address","")
 				.set("complementary_address", "")
 				.set("local","")
-				.set("postal_code", "")
+				.set("zipcode", "")
 				.build();
 		
 		Transaction txn = datastore.newTransaction();
@@ -362,6 +363,72 @@ public class AccountsResource {
 		catch(DatastoreException e) {
 			txn.rollback();
 			log.severe(String.format("DatastoreException on getting profile  of user with ID:[%s]\n %s",token.getUserId(), e.toString()));
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();//Internal server error
+		}
+		finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				log.severe(String.format("Transaction was active after getting profile if user with ID:[%s]\n",token.getUserId()));
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build(); //Transaction was active
+			}
+		}
+		
+	}
+	
+	@POST
+	@Path("/profilePublic/{userId}")
+	public Response getPublicProfile(AuthenticationToken token, @PathParam("userId") String userId) {
+		log.info(String.format("Attempting to get profile of user with ID:[%s]\n", userId));
+		
+		if(!validateToken(token,System.currentTimeMillis())) {
+			log.warning(String.format("Authentication token invalid to get profile of user with ID:[%s]", token.getUserId()));
+			return Response.status(Status.FORBIDDEN).build(); //Token Invalid
+		}
+		Key userKey = userKeyFactory.newKey(userId);
+		Key profileKey = datastore.newKeyFactory().addAncestor(PathElement.of("User",userId)).setKind("Profile").newKey(String.format(USER_PROFILE_FORMAT,userId));
+		
+		Key tokenKey = datastore.newKeyFactory().addAncestor(PathElement.of("User",token.getUserId())).setKind("Token").newKey(token.getId());
+		Transaction txn = datastore.newTransaction(TransactionOptions.newBuilder().setReadOnly(ReadOnly.newBuilder().build()).build());
+		try {
+			
+			Entity storedToken = txn.get(tokenKey);
+			if(storedToken == null) {
+				txn.rollback();
+				log.warning(String.format("User with ID:[%s] is not logged in with this token\n",token.getUserId()));
+				return Response.status(Status.FORBIDDEN).build();//User not logged in
+			}
+			
+			if(!token.getChecksum().equals(storedToken.getString("checksum"))) {
+				txn.rollback();
+				log.warning(String.format("Provided token with ID:[%s] has invalid checksum\n",token.getId()));
+				return Response.status(Status.FORBIDDEN).build();//Token not valid(wrong checksum)
+			}
+			
+			Entity user = txn.get(userKey);
+			
+			if(user == null) {
+				log.warning(String.format("User with ID:[%s] does not exist", userId));
+				txn.rollback();
+				return Response.status(Status.FORBIDDEN).build(); //Token Invalid
+			}
+			
+			if(!user.getString("visibility").equals(ProfileTypes.PUBLIC.toString())) {
+				log.warning(String.format("User with ID:[%s] does not have a public profile", userId));
+				txn.rollback();
+				return Response.status(Status.FORBIDDEN).build(); //Token Invalid
+			}
+			Entity storedProfile = txn.get(profileKey);
+			
+			ProfileData profile = new ProfileData(user.getString("visibility"),userId,user.getString("email"),storedProfile.getString("landline"),storedProfile.getString("cellphone"),
+					storedProfile.getString("address"),storedProfile.getString("complementary_address"),storedProfile.getString("local"),storedProfile.getString("zipcode"));
+			
+			txn.commit();
+			log.info(String.format("Got profile of user with ID:[%s]\n", userId));
+			return Response.ok(g.toJson(profile)).build();
+		}
+		catch(DatastoreException e) {
+			txn.rollback();
+			log.severe(String.format("DatastoreException on getting profile  of user with ID:[%s]\n %s",userId, e.toString()));
 			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();//Internal server error
 		}
 		finally {
