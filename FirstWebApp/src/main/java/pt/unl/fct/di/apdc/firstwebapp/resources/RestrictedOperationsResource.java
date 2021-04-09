@@ -54,7 +54,7 @@ public class RestrictedOperationsResource {
 	
 	public RestrictedOperationsResource() {}
 	
-	@DELETE
+	@PUT
 	@Path("/delete/{userId}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response deleteOther(AuthenticationToken token, @PathParam("userId") String userId) {

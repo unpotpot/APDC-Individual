@@ -123,7 +123,7 @@ public class AccountsResource {
 		}
 	}
 	
-	@DELETE
+	@PUT
 	@Path("/delete")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response delete(AuthenticationToken token) {
@@ -259,7 +259,7 @@ public class AccountsResource {
 		}
 	}
 	
-	@DELETE
+	@PUT
 	@Path("/logout")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response logout(AuthenticationToken token) {
